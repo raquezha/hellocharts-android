@@ -75,7 +75,7 @@ class Column {
 
     /**
      * Set true if you want to show value labels only for selected value, works best when chart has
-     * isValueSelectionEnabled set to true {@link Chart#setValueSelectionEnabled(boolean)}.
+     * isValueSelectionEnabled set to true [lecho.lib.hellocharts.view.Chart.setValueSelectionEnabled]
      */
     fun setHasLabelsOnlyForSelected(hasLabelsOnlyForSelected: Boolean): Column {
         this.hasLabelsOnlyForSelected = hasLabelsOnlyForSelected

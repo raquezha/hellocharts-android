@@ -13,7 +13,6 @@ class SliceValue {
      * Current value of this slice.
      */
     var value = 0f
-        private set
 
     /**
      * Origin value of this slice, used during value animation.
@@ -29,13 +28,11 @@ class SliceValue {
      * Color of this slice.
      */
     var color = ChartUtils.DEFAULT_COLOR
-        private set
 
     /**
      * Darken color used to draw label background and give touch feedback.
      */
     var darkenColor = ChartUtils.DEFAULT_DARKEN_COLOR
-        private set
 
     /**
      * Custom label for this slice, if not set number formatting will be used.
