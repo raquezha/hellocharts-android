@@ -361,7 +361,7 @@ public class LineChartRenderer extends AbstractChartRenderer {
     private void prepareLinePaint(final Line line) {
         linePaint.setStrokeWidth(ChartUtils.dp2px(density, line.getStrokeWidth()));
         linePaint.setColor(line.getColor());
-        linePaint.setPathEffect(line.getPathEffect());
+        linePaint.setPathEffect(line.pathEffect);
         linePaint.setShader(null);
     }
 
