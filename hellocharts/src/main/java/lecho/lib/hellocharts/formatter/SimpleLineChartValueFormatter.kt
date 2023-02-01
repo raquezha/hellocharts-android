@@ -17,8 +17,7 @@ class SimpleLineChartValueFormatter() : LineChartValueFormatter {
 
     override fun formatChartValue(formattedValue: CharArray, value: PointValue): Int {
         return valueFormatterHelper.formatFloatValueWithPrependedAndAppendedText(
-            formattedValue, value.y, value
-                .labelAsChars
+            formattedValue, value.y, value.label
         )
     }
 
