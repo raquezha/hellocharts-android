@@ -1,103 +1,101 @@
-package lecho.lib.hellocharts.gesture;
+package lecho.lib.hellocharts.gesture
 
-import android.content.Context;
-import android.view.GestureDetector;
-import android.view.MotionEvent;
-import android.view.ScaleGestureDetector;
-import android.view.ViewParent;
-
-import lecho.lib.hellocharts.computator.ChartComputator;
-import lecho.lib.hellocharts.model.SelectedValue;
-import lecho.lib.hellocharts.renderer.ChartRenderer;
-import lecho.lib.hellocharts.view.Chart;
+import android.content.Context
+import android.view.GestureDetector
+import android.view.GestureDetector.SimpleOnGestureListener
+import android.view.MotionEvent
+import android.view.ScaleGestureDetector
+import android.view.ScaleGestureDetector.SimpleOnScaleGestureListener
+import android.view.ViewParent
+import lecho.lib.hellocharts.computator.ChartComputator
+import lecho.lib.hellocharts.gesture.ChartScroller.ScrollResult
+import lecho.lib.hellocharts.model.SelectedValue
+import lecho.lib.hellocharts.renderer.ChartRenderer
+import lecho.lib.hellocharts.view.Chart
 
 /**
  * Default touch handler for most charts. Handles value touch, scroll, fling and zoom.
  */
-public class ChartTouchHandler {
-    protected GestureDetector gestureDetector;
-    protected ScaleGestureDetector scaleGestureDetector;
-    protected ChartScroller chartScroller;
-    protected ChartZoomer chartZoomer;
-    protected Chart chart;
-    protected ChartComputator computator;
-    protected ChartRenderer renderer;
-
-    protected boolean isZoomEnabled = true;
-    protected boolean isScrollEnabled = true;
-    protected boolean isValueTouchEnabled = true;
-    protected boolean isValueSelectionEnabled = false;
+open class ChartTouchHandler(context: Context?, protected var chart: Chart) {
+    protected var gestureDetector: GestureDetector
+    protected var scaleGestureDetector: ScaleGestureDetector
+    protected var chartScroller: ChartScroller
+    protected var chartZoomer: ChartZoomer
+    protected var computator: ChartComputator
+    protected var renderer: ChartRenderer
+    @JvmField
+    var isZoomEnabled = true
+    @JvmField
+    var isScrollEnabled = true
+    @JvmField
+    var isValueTouchEnabled = true
+    @JvmField
+    var isValueSelectionEnabled = false
 
     /**
      * Used only for selection mode to avoid calling listener multiple times for the same selection. Small thing but it
      * is more intuitive this way.
      */
-    protected SelectedValue selectionModeOldValue = new SelectedValue();
-
-    protected SelectedValue selectedValue = new SelectedValue();
-    protected SelectedValue oldSelectedValue = new SelectedValue();
+    protected var selectionModeOldValue = SelectedValue()
+    protected var selectedValue = SelectedValue()
+    protected var oldSelectedValue = SelectedValue()
 
     /**
      * ViewParent to disallow touch events interception if chart is within scroll container.
      */
-    protected ViewParent viewParent;
+    protected var viewParent: ViewParent? = null
 
     /**
      * Type of scroll of container, horizontal or vertical.
      */
-    protected ContainerScrollType containerScrollType;
+    protected var containerScrollType: ContainerScrollType? = null
 
-    public ChartTouchHandler(Context context, Chart chart) {
-        this.chart = chart;
-        this.computator = chart.getChartComputator();
-        this.renderer = chart.getChartRenderer();
-        gestureDetector = new GestureDetector(context, new ChartGestureListener());
-        scaleGestureDetector = new ScaleGestureDetector(context, new ChartScaleGestureListener());
-        chartScroller = new ChartScroller(context);
-        chartZoomer = new ChartZoomer(ZoomType.HORIZONTAL_AND_VERTICAL);
+    init {
+        computator = chart.chartComputator
+        renderer = chart.chartRenderer
+        gestureDetector = GestureDetector(context, ChartGestureListener())
+        scaleGestureDetector = ScaleGestureDetector(context!!, ChartScaleGestureListener())
+        chartScroller = ChartScroller(context)
+        chartZoomer = ChartZoomer(ZoomType.HORIZONTAL_AND_VERTICAL)
     }
 
-    public void resetTouchHandler() {
-        this.computator = chart.getChartComputator();
-        this.renderer = chart.getChartRenderer();
+    fun resetTouchHandler() {
+        computator = chart.chartComputator
+        renderer = chart.chartRenderer
     }
 
     /**
-     * Computes scroll and zoom using {@link ChartScroller} and {@link ChartZoomer}. This method returns true if
+     * Computes scroll and zoom using [ChartScroller] and [ChartZoomer]. This method returns true if
      * scroll/zoom was computed and chart needs to be invalidated.
      */
-    public boolean computeScroll() {
-        boolean needInvalidate = isScrollEnabled && chartScroller.computeScrollOffset(computator);
+    open fun computeScroll(): Boolean {
+        var needInvalidate = isScrollEnabled && chartScroller.computeScrollOffset(computator)
         if (isZoomEnabled && chartZoomer.computeZoom(computator)) {
-            needInvalidate = true;
+            needInvalidate = true
         }
-        return needInvalidate;
+        return needInvalidate
     }
 
     /**
      * Handle chart touch event(gestures, clicks). Return true if gesture was handled and chart needs to be
      * invalidated.
      */
-    public boolean handleTouchEvent(MotionEvent event) {
-        boolean needInvalidate;
+    open fun handleTouchEvent(event: MotionEvent): Boolean {
+        var needInvalidate: Boolean
 
         // TODO: detectors always return true, use class member needInvalidate instead local variable as workaround.
         // This flag should be computed inside gesture listeners methods to avoid invalidation.
-        needInvalidate = gestureDetector.onTouchEvent(event);
-
-        needInvalidate = scaleGestureDetector.onTouchEvent(event) || needInvalidate;
-
-        if (isZoomEnabled && scaleGestureDetector.isInProgress()) {
+        needInvalidate = gestureDetector.onTouchEvent(event)
+        needInvalidate = scaleGestureDetector.onTouchEvent(event) || needInvalidate
+        if (isZoomEnabled && scaleGestureDetector.isInProgress) {
             // Special case: if view is inside scroll container and user is scaling disable touch interception by
             // parent.
-            disallowParentInterceptTouchEvent();
+            disallowParentInterceptTouchEvent()
         }
-
         if (isValueTouchEnabled) {
-            needInvalidate = computeTouch(event) || needInvalidate;
+            needInvalidate = computeTouch(event) || needInvalidate
         }
-
-        return needInvalidate;
+        return needInvalidate
     }
 
     /**
@@ -107,223 +105,172 @@ public class ChartTouchHandler {
      * vertical
      * scroll container like ViewPager.
      */
-    public boolean handleTouchEvent(MotionEvent event, ViewParent viewParent,
-                                    ContainerScrollType containerScrollType) {
-        this.viewParent = viewParent;
-        this.containerScrollType = containerScrollType;
-
-        return handleTouchEvent(event);
+    fun handleTouchEvent(
+        event: MotionEvent, viewParent: ViewParent?,
+        containerScrollType: ContainerScrollType?
+    ): Boolean {
+        this.viewParent = viewParent
+        this.containerScrollType = containerScrollType
+        return handleTouchEvent(event)
     }
 
     /**
      * Disallow parent view from intercepting touch events. Use it for chart that is within some scroll container i.e.
      * ViewPager.
      */
-    private void disallowParentInterceptTouchEvent() {
+    private fun disallowParentInterceptTouchEvent() {
         if (null != viewParent) {
-            viewParent.requestDisallowInterceptTouchEvent(true);
+            viewParent!!.requestDisallowInterceptTouchEvent(true)
         }
     }
 
     /**
      * Allow parent view to intercept touch events if chart cannot be scroll horizontally or vertically according to
      * the
-     * current value of {@link #containerScrollType}.
+     * current value of [.containerScrollType].
      */
-    private void allowParentInterceptTouchEvent(ChartScroller.ScrollResult scrollResult) {
+    private fun allowParentInterceptTouchEvent(scrollResult: ScrollResult) {
         if (null != viewParent) {
-
-            if (ContainerScrollType.HORIZONTAL == containerScrollType && !scrollResult.getCanScrollX()
-                    && !scaleGestureDetector.isInProgress()) {
-                viewParent.requestDisallowInterceptTouchEvent(false);
-            } else if (ContainerScrollType.VERTICAL == containerScrollType && !scrollResult.getCanScrollY()
-                    && !scaleGestureDetector.isInProgress()) {
-                viewParent.requestDisallowInterceptTouchEvent(false);
+            if (ContainerScrollType.HORIZONTAL === containerScrollType && !scrollResult.canScrollX
+                && !scaleGestureDetector.isInProgress
+            ) {
+                viewParent!!.requestDisallowInterceptTouchEvent(false)
+            } else if (ContainerScrollType.VERTICAL === containerScrollType && !scrollResult.canScrollY
+                && !scaleGestureDetector.isInProgress
+            ) {
+                viewParent!!.requestDisallowInterceptTouchEvent(false)
             }
         }
     }
 
-    private boolean computeTouch(MotionEvent event) {
-        boolean needInvalidate = false;
-        switch (event.getAction()) {
-            case MotionEvent.ACTION_DOWN:
-                boolean wasTouched = renderer.isTouched();
-                boolean isTouched = checkTouch(event.getX(), event.getY());
+    private fun computeTouch(event: MotionEvent): Boolean {
+        var needInvalidate = false
+        when (event.action) {
+            MotionEvent.ACTION_DOWN -> {
+                val wasTouched = renderer.isTouched
+                val isTouched = checkTouch(event.x, event.y)
                 if (wasTouched != isTouched) {
-                    needInvalidate = true;
-
+                    needInvalidate = true
                     if (isValueSelectionEnabled) {
-                        selectionModeOldValue.clear();
-                        if (wasTouched && !renderer.isTouched()) {
-                            chart.callTouchListener();
+                        selectionModeOldValue.clear()
+                        if (wasTouched && !renderer.isTouched) {
+                            chart.callTouchListener()
                         }
                     }
                 }
-                break;
-            case MotionEvent.ACTION_UP:
-                if (renderer.isTouched()) {
-                    if (checkTouch(event.getX(), event.getY())) {
-                        if (isValueSelectionEnabled) {
-                            // For selection mode call listener only if selected value changed,
-                            // that means that should be
-                            // first(selection) click on given value.
-                            if (!selectionModeOldValue.equals(selectedValue)) {
-                                selectionModeOldValue.set(selectedValue);
-                                chart.callTouchListener();
-                            }
-                        } else {
-                            chart.callTouchListener();
-                            renderer.clearTouch();
+            }
+
+            MotionEvent.ACTION_UP -> if (renderer.isTouched) {
+                if (checkTouch(event.x, event.y)) {
+                    if (isValueSelectionEnabled) {
+                        // For selection mode call listener only if selected value changed,
+                        // that means that should be
+                        // first(selection) click on given value.
+                        if (selectionModeOldValue != selectedValue) {
+                            selectionModeOldValue.set(selectedValue)
+                            chart.callTouchListener()
                         }
                     } else {
-                        renderer.clearTouch();
+                        chart.callTouchListener()
+                        renderer.clearTouch()
                     }
-                    needInvalidate = true;
+                } else {
+                    renderer.clearTouch()
                 }
-                break;
-            case MotionEvent.ACTION_MOVE:
-                // If value was touched and now touch point is outside of value area - clear touch and invalidate, user
+                needInvalidate = true
+            }
+
+            MotionEvent.ACTION_MOVE ->                 // If value was touched and now touch point is outside of value area - clear touch and invalidate, user
                 // probably moved finger away from given chart value.
-                if (renderer.isTouched()) {
-                    if (!checkTouch(event.getX(), event.getY())) {
-                        renderer.clearTouch();
-                        needInvalidate = true;
+                if (renderer.isTouched) {
+                    if (!checkTouch(event.x, event.y)) {
+                        renderer.clearTouch()
+                        needInvalidate = true
                     }
                 }
 
-                break;
-            case MotionEvent.ACTION_CANCEL:
-                if (renderer.isTouched()) {
-                    renderer.clearTouch();
-                    needInvalidate = true;
-                }
-                break;
+            MotionEvent.ACTION_CANCEL -> if (renderer.isTouched) {
+                renderer.clearTouch()
+                needInvalidate = true
+            }
         }
-        return needInvalidate;
+        return needInvalidate
     }
 
-    private boolean checkTouch(float touchX, float touchY) {
-        oldSelectedValue.set(selectedValue);
-        selectedValue.clear();
-
+    private fun checkTouch(touchX: Float, touchY: Float): Boolean {
+        oldSelectedValue.set(selectedValue)
+        selectedValue.clear()
         if (renderer.checkTouch(touchX, touchY)) {
-            selectedValue.set(renderer.getSelectedValue());
+            selectedValue.set(renderer.selectedValue)
         }
 
         // Check if selection is still on the same value, if not return false.
-        if (oldSelectedValue.isSet() && selectedValue.isSet() && !oldSelectedValue.equals(selectedValue)) {
-            return false;
+        return if (oldSelectedValue.isSet && selectedValue.isSet && oldSelectedValue != selectedValue) {
+            false
         } else {
-            return renderer.isTouched();
+            renderer.isTouched
         }
     }
 
-    public boolean isZoomEnabled() {
-        return isZoomEnabled;
-    }
+    var zoomType: ZoomType?
+        get() = chartZoomer.zoomType
+        set(zoomType) {
+            chartZoomer.zoomType = zoomType!!
+        }
 
-    public void setZoomEnabled(boolean isZoomEnabled) {
-        this.isZoomEnabled = isZoomEnabled;
-
-    }
-
-    public boolean isScrollEnabled() {
-        return isScrollEnabled;
-    }
-
-    public void setScrollEnabled(boolean isScrollEnabled) {
-        this.isScrollEnabled = isScrollEnabled;
-    }
-
-    public ZoomType getZoomType() {
-        return chartZoomer.getZoomType();
-    }
-
-    public void setZoomType(ZoomType zoomType) {
-        chartZoomer.setZoomType(zoomType);
-    }
-
-    public boolean isValueTouchEnabled() {
-        return isValueTouchEnabled;
-    }
-
-    public void setValueTouchEnabled(boolean isValueTouchEnabled) {
-        this.isValueTouchEnabled = isValueTouchEnabled;
-    }
-
-    public boolean isValueSelectionEnabled() {
-        return isValueSelectionEnabled;
-    }
-
-    public void setValueSelectionEnabled(boolean isValueSelectionEnabled) {
-        this.isValueSelectionEnabled = isValueSelectionEnabled;
-    }
-
-    protected class ChartScaleGestureListener extends ScaleGestureDetector.SimpleOnScaleGestureListener {
-
-        @Override
-        public boolean onScale(ScaleGestureDetector detector) {
+    protected inner class ChartScaleGestureListener : SimpleOnScaleGestureListener() {
+        override fun onScale(detector: ScaleGestureDetector): Boolean {
             if (isZoomEnabled) {
-                float scale = 2.0f - detector.getScaleFactor();
-                if (Float.isInfinite(scale)) {
-                    scale = 1;
+                var scale = 2.0f - detector.scaleFactor
+                if (java.lang.Float.isInfinite(scale)) {
+                    scale = 1f
                 }
-                return chartZoomer.scale(computator, detector.getFocusX(), detector.getFocusY(), scale);
+                return chartZoomer.scale(computator, detector.focusX, detector.focusY, scale)
             }
-
-            return false;
+            return false
         }
     }
 
-    protected class ChartGestureListener extends GestureDetector.SimpleOnGestureListener {
-
-        protected ChartScroller.ScrollResult scrollResult = new ChartScroller.ScrollResult();
-
-        @Override
-        public boolean onDown(MotionEvent e) {
+    protected open inner class ChartGestureListener : SimpleOnGestureListener() {
+        protected var scrollResult = ScrollResult()
+        override fun onDown(e: MotionEvent): Boolean {
             if (isScrollEnabled) {
-
-                disallowParentInterceptTouchEvent();
-
-                return chartScroller.startScroll(computator);
+                disallowParentInterceptTouchEvent()
+                return chartScroller.startScroll(computator)
             }
-
-            return false;
-
+            return false
         }
 
-        @Override
-        public boolean onDoubleTap(MotionEvent e) {
-            if (isZoomEnabled) {
-                return chartZoomer.startZoom(e, computator);
-            }
-
-            return false;
+        override fun onDoubleTap(e: MotionEvent): Boolean {
+            return if (isZoomEnabled) {
+                chartZoomer.startZoom(e, computator)
+            } else false
         }
 
-        @Override
-        public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
+        override fun onScroll(
+            e1: MotionEvent,
+            e2: MotionEvent,
+            distanceX: Float,
+            distanceY: Float
+        ): Boolean {
             if (isScrollEnabled) {
-                boolean canScroll = chartScroller
-                        .scroll(computator, distanceX, distanceY, scrollResult);
-
-                allowParentInterceptTouchEvent(scrollResult);
-
-                return canScroll;
+                val canScroll = chartScroller
+                    .scroll(computator, distanceX, distanceY, scrollResult)
+                allowParentInterceptTouchEvent(scrollResult)
+                return canScroll
             }
-
-            return false;
-
+            return false
         }
 
-        @Override
-        public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-            if (isScrollEnabled) {
-                return chartScroller.fling((int) -velocityX, (int) -velocityY, computator);
-            }
-
-            return false;
+        override fun onFling(
+            e1: MotionEvent,
+            e2: MotionEvent,
+            velocityX: Float,
+            velocityY: Float
+        ): Boolean {
+            return if (isScrollEnabled) {
+                chartScroller.fling(-velocityX.toInt(), -velocityY.toInt(), computator)
+            } else false
         }
     }
-
 }

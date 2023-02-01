@@ -209,22 +209,22 @@ public abstract class AbstractChartView extends View implements Chart {
 
     @Override
     public boolean isZoomEnabled() {
-        return touchHandler.isZoomEnabled();
+        return touchHandler.isZoomEnabled;
     }
 
     @Override
     public void setZoomEnabled(boolean isZoomEnabled) {
-        touchHandler.setZoomEnabled(isZoomEnabled);
+        touchHandler.isZoomEnabled = isZoomEnabled;
     }
 
     @Override
     public boolean isScrollEnabled() {
-        return touchHandler.isScrollEnabled();
+        return touchHandler.isScrollEnabled;
     }
 
     @Override
     public void setScrollEnabled(boolean isScrollEnabled) {
-        touchHandler.setScrollEnabled(isScrollEnabled);
+        touchHandler.isScrollEnabled = isScrollEnabled;
     }
 
     @Override
@@ -265,12 +265,12 @@ public abstract class AbstractChartView extends View implements Chart {
 
     @Override
     public boolean isValueTouchEnabled() {
-        return touchHandler.isValueTouchEnabled();
+        return touchHandler.isValueTouchEnabled;
     }
 
     @Override
     public void setValueTouchEnabled(boolean isValueTouchEnabled) {
-        touchHandler.setValueTouchEnabled(isValueTouchEnabled);
+        touchHandler.isValueTouchEnabled = isValueTouchEnabled;
 
     }
 
@@ -431,12 +431,12 @@ public abstract class AbstractChartView extends View implements Chart {
 
     @Override
     public boolean isValueSelectionEnabled() {
-        return touchHandler.isValueSelectionEnabled();
+        return touchHandler.isValueSelectionEnabled;
     }
 
     @Override
     public void setValueSelectionEnabled(boolean isValueSelectionEnabled) {
-        touchHandler.setValueSelectionEnabled(isValueSelectionEnabled);
+        touchHandler.isValueSelectionEnabled = isValueSelectionEnabled;
     }
 
     @Override
