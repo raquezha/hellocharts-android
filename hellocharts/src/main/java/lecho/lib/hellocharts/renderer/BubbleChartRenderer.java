@@ -220,7 +220,7 @@ public class BubbleChartRenderer extends AbstractChartRenderer {
 
     private void highlightBubbles(Canvas canvas) {
         final BubbleChartData data = dataProvider.getBubbleChartData();
-        BubbleValue bubbleValue = data.getValues().get(selectedValue.getFirstIndex());
+        BubbleValue bubbleValue = data.getValues().get(selectedValue.firstIndex);
         highlightBubble(canvas, bubbleValue);
     }
 

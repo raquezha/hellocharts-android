@@ -73,22 +73,26 @@ public class ComboLineColumnChartView extends AbstractChartView implements Combo
 
         if (selectedValue.isSet()) {
 
-            if (SelectedValueType.COLUMN.equals(selectedValue.getType())) {
+            if (SelectedValueType.COLUMN.equals(selectedValue.type)) {
 
-                SubcolumnValue value = data.getColumnChartData().getColumns().get(selectedValue.getFirstIndex())
-                        .getValues().get(selectedValue.getSecondIndex());
-                onValueTouchListener.onColumnValueSelected(selectedValue.getFirstIndex(),
-                        selectedValue.getSecondIndex(), value);
+                SubcolumnValue value = data.getColumnChartData().getColumns().get(selectedValue.firstIndex)
+                        .getValues().get(selectedValue.secondIndex);
+                onValueTouchListener.onColumnValueSelected(selectedValue.firstIndex,
+                        selectedValue.secondIndex, value);
 
-            } else if (SelectedValueType.LINE.equals(selectedValue.getType())) {
+            } else if (SelectedValueType.LINE.equals(selectedValue.type)) {
 
-                PointValue value = data.getLineChartData().getLines().get(selectedValue.getFirstIndex()).getValues()
-                        .get(selectedValue.getSecondIndex());
-                onValueTouchListener.onPointValueSelected(selectedValue.getFirstIndex(), selectedValue.getSecondIndex(),
+                PointValue value = data.getLineChartData().getLines().get(selectedValue.firstIndex).getValues()
+                        .get(selectedValue.secondIndex);
+                onValueTouchListener.onPointValueSelected(selectedValue.firstIndex, selectedValue.secondIndex,
                         value);
 
             } else {
-                throw new IllegalArgumentException("Invalid selected value type " + selectedValue.getType().name());
+                if (selectedValue.type != null) {
+                    throw new IllegalArgumentException("Invalid selected value type " + selectedValue.type.name());
+                } else {
+                    throw new IllegalArgumentException("Invalid selected value type " + selectedValue);
+                }
             }
         } else {
             onValueTouchListener.onValueDeselected();
